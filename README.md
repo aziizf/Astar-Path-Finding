@@ -1,5 +1,5 @@
 # Astar-Path-Planning
-In this project we will try to find the cheapest path using A*.
+In this project we will try to find the cheapest path using A* algorithm.
 
 This is a Python project that implements the A* algorithm for path planning in a grid world. The project uses the Pygame library for graphical display and user interaction. The objective of the project is to find the shortest path between a given start and end point in a grid world that contains obstacles.
 
