@@ -2,7 +2,7 @@ import pygame
 import math
 from queue import PriorityQueue
 import random
-import time
+import timeit
 
 CLOSED = (227, 148, 155)
 GOAL = (232, 184, 132)
@@ -89,18 +89,19 @@ class node:
 
     def init_map(self, win):
         pygame.draw.rect(win, self.color, (self.x, self.y, self.width, self.width))
+        font_size = int(self.width / 4)
         if self.is_start():
-            font = pygame.font.SysFont('georgia', 20)
+            font = pygame.font.SysFont('georgia', font_size)
             text = font.render("START", True, OBSTACLES)
             text_rect = text.get_rect(center=(self.x + self.width / 2, self.y + self.width / 2))
             win.blit(text, text_rect)
         elif self.is_end():
-            font = pygame.font.SysFont('georgia', 20)
+            font = pygame.font.SysFont('georgia', font_size)
             text = font.render("END", True, OBSTACLES)
             text_rect = text.get_rect(center=(self.x + self.width / 2, self.y + self.width / 2))
             win.blit(text, text_rect)
         else:
-            font = pygame.font.SysFont('georgia', 10)
+            font = pygame.font.SysFont('leelawadeeui', font_size)
             if self.is_obstacle():
                 text = font.render(f"({self.row}, {self.col})", True, CLEAN)
             else:
@@ -124,34 +125,38 @@ class node:
         return False
 
 
-def hueristic(p1, p2):
+# def heuristic(p1, p2):  # Manhattan
+#     x1, y1 = p1
+#     x2, y2 = p2
+#     dx = abs(x1 - x2)
+#     dy = abs(y1 - y2)
+#     return (dx + dy) + (math.sqrt(2) - 2) * (dx if dx > dy else dy)
+
+def heuristic(p1, p2):  # Euclidean
     x1, y1 = p1
     x2, y2 = p2
     dx = abs(x1 - x2)
     dy = abs(y1 - y2)
-    return (dx + dy) + (math.sqrt(2) - 2) * (dx if dx > dy else dy)
+    return math.sqrt(dx**2 + dy**2)
 
 
-def path(previous_nodes, current, draw, start):
+def path(previous_nodes, current, start):
     path = []
-    path_cost = 0
     while current in previous_nodes:
         path.append(current)
         current = previous_nodes[current]
     path.append(start)
-    path_cost = sum([math.sqrt(2) if abs(path[i].row - path[i-1].row) == 1 and abs(path[i].col - path[i-1].col) == 1 else 1 for i in range(1, len(path))])
+    path_cost = sum([math.sqrt(2) if abs(path[i].row - path[i - 1].row) == 1 and abs(path[i].col - path[i - 1].col) == 1 else 1 for i in range(1, len(path))])
     path.reverse()
     for cell in path:
         cell.set_path()
-        draw()
     print([cell.get_pos() for cell in path])
-    print("Path cost:", path_cost)
+    print("Path cost: {:.5f}".format(path_cost))
     return path
 
 
-def A_star(draw, grid, start, end):
+def A_star(grid, start, end):
     counter = 0
-    cost = 0
     open_queue = PriorityQueue()
     open_queue.put((0, counter, start))
     previous_nodes = {}
@@ -161,15 +166,12 @@ def A_star(draw, grid, start, end):
     f_score = {tnode: float("inf") for row in grid for tnode in row}
     f_score[start] = 0
 
-    start_time = time.time()
     while not open_queue.empty():
-
         on_going = open_queue.get()[2]
         open_list.remove(on_going)
 
         if on_going == end:
-            print("--- %s seconds ---" % (time.time() - start_time))
-            path(previous_nodes, end, draw, start)
+            path(previous_nodes, end, start)
             start.set_start()
             end.set_goal()
             return True
@@ -186,18 +188,16 @@ def A_star(draw, grid, start, end):
             if temp_g_score < g_score[neighbor]:
                 previous_nodes[neighbor] = on_going
                 g_score[neighbor] = temp_g_score
-                f_score[neighbor] = temp_g_score + hueristic(neighbor.get_pos(), end.get_pos())
+                f_score[neighbor] = temp_g_score + heuristic(neighbor.get_pos(), end.get_pos())
                 if neighbor not in open_list:
                     counter += 1
                     open_queue.put((f_score[neighbor], counter, neighbor))
                     open_list.add(neighbor)
                     neighbor.set_open()
 
-        draw()
 
     if open_queue.empty():
-        print("--- %s seconds ---" % (time.time() - start_time))
-        print("Path does not exist!")
+        print("Path does not exist !")
         return False
 
 
@@ -212,7 +212,6 @@ def map(rows, width, obstacles_percentage):
             tnode = node(i, j, gap, rows)
             grid[i].append(tnode)
 
-    # Set start and end nodes
     start = random.choice(random.choice(grid))
     end = random.choice(random.choice(grid))
     while end == start:
@@ -221,7 +220,6 @@ def map(rows, width, obstacles_percentage):
     start.set_start()
     end.set_goal()
 
-    # Add obstacles
     for i in range(num_obstacles):
         while True:
             row = random.randint(0, rows - 1)
@@ -252,20 +250,19 @@ def produce(win, grid, rows, width):
     matrix(win, rows, width)
     pygame.display.update()
 
-pygame.init()
-WINDOW_SIZE = 1000
-WINDOW = pygame.display.set_mode((WINDOW_SIZE, WINDOW_SIZE))
-pygame.display.set_caption("A* Path Planning (Robot)")
 
-
-def main(win, width):
+def main():
+    pygame.init()
+    WINDOW_SIZE = 600
+    WINDOW = pygame.display.set_mode((WINDOW_SIZE, WINDOW_SIZE))
+    pygame.display.set_caption("A* Path Finding (Robot)")
     SIZE = 10
-    OBSTACLES = 0.7
-    grid, start, end = map(SIZE, width, OBSTACLES)
+    OBSTACLES = 0.1
+    grid, start, end = map(SIZE, WINDOW_SIZE, OBSTACLES)
 
     run = True
     while run:
-        produce(win, grid, SIZE, width)
+        produce(WINDOW, grid, SIZE, WINDOW_SIZE)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
@@ -275,11 +272,10 @@ def main(win, width):
                     for row in grid:
                         for tnode in row:
                             tnode.adjacent(grid)
-                    x = lambda: produce(win, grid, SIZE, width)
-                    A_star(x, grid, start, end)
+                    execution_time = timeit.timeit(lambda: A_star(grid, start, end), number=1)
+                    print("Execution time: {:.5f} ms".format(execution_time * 1000))
 
     pygame.quit()
 
 
-main(WINDOW, WINDOW_SIZE)
-
+main()
