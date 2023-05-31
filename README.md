@@ -16,6 +16,6 @@ Finally the project will print the execution time, cost, and the path if exist.
 *Note that you are welcome to change the window size, grid size, and percentage of the obstacles (blocked nodes).
 To do that: -
   - window size: In line #256 you will see "WINDOW_SIZE" you can modify it as you like.
-  - grid size: In line #262 you will see "SIZE" you can modify it, and number of nodes will be equal to (SIZE*SIZE).
-  - percentage of the obstacles: In line #263 you will see "OBSTACLES" you can choose number in range of (0.0 - 1.0).
+  - grid size: In line #259 you will see "SIZE" you can modify it, and number of nodes will be equal to (SIZE*SIZE).
+  - percentage of the obstacles: In line #260 you will see "OBSTACLES" you can choose number in range of (0.0 - 1.0).
 
